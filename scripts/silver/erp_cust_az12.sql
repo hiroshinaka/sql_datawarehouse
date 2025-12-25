@@ -1,14 +1,40 @@
-insert into silver.erp_cust_az12(cid, bdate, gen)
-SELECT  
-		case when [cid] like 'NAS%' then substring(cid, 4, len(cid))
-		else cid 
-		end cid
-      ,case when bdate > getdate() then null 
-	  else bdate
-	  end bdate
-      ,case when upper(trim(gen)) in ('F', 'Female') then 'Female'
-	  when upper(trim(gen)) in ('M', 'Male') then 'Male'
-	  else 'N/A'
-	  end gen
-  FROM [DataWarehouse].[bronze].[erp_cust_az12]
-  
+/*
+=============================================================
+Load Script: silver.erp_cust_az12
+=============================================================
+Purpose:
+	Populate the silver-layer ERP customer attributes from
+	bronze, standardizing customer IDs, birthdates, and gender.
+
+Logic summary:
+	- Strips the 'NAS' prefix from cid when present.
+	- Nulls birthdates that are in the future.
+	- Normalizes gender values to 'Female', 'Male', or 'N/A'.
+
+Source:
+	- DataWarehouse.bronze.erp_cust_az12
+Target:
+	- silver.erp_cust_az12
+*/
+
+INSERT INTO silver.erp_cust_az12 (
+	cid,
+	bdate,
+	gen
+)
+SELECT
+	CASE
+		WHEN cid LIKE 'NAS%' THEN SUBSTRING(cid, 4, LEN(cid))
+		ELSE cid
+	END AS cid,
+	CASE
+		WHEN bdate > GETDATE() THEN NULL
+		ELSE bdate
+	END AS bdate,
+	CASE
+		WHEN UPPER(TRIM(gen)) IN ('F', 'FEMALE') THEN 'Female'
+		WHEN UPPER(TRIM(gen)) IN ('M', 'MALE')   THEN 'Male'
+		ELSE 'N/A'
+	END AS gen
+FROM DataWarehouse.bronze.erp_cust_az12;
+
